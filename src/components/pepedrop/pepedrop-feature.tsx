@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletButton } from '../solana/solana-provider'
-import { AppHero, ellipsify } from '../ui/ui-layout'
-import { ExplorerLink } from '../cluster/cluster-ui'
-import { usePepedropProgram } from './pepedrop-data-access'
-import { PepedropCreate, PepedropList } from './pepedrop-ui'
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletButton } from "../solana/solana-provider";
+import { AppHero, ellipsify } from "../ui/ui-layout";
+import { ExplorerLink } from "../cluster/cluster-ui";
+import { usePepedropProgram } from "./pepedrop-data-access";
+import { PepedropList } from "./pepedrop-ui";
 
 export default function PepedropFeature() {
-  const { publicKey } = useWallet()
-  const { programId } = usePepedropProgram()
+  const { publicKey } = useWallet();
+  const { programId } = usePepedropProgram();
 
   return publicKey ? (
     <div>
@@ -20,9 +20,11 @@ export default function PepedropFeature() {
         }
       >
         <p className="mb-6">
-          <ExplorerLink path={`account/${programId}`} label={ellipsify(programId.toString())} />
+          <ExplorerLink
+            path={`account/${programId}`}
+            label={ellipsify(programId.toString())}
+          />
         </p>
-        <PepedropCreate />
       </AppHero>
       <PepedropList />
     </div>
@@ -34,5 +36,5 @@ export default function PepedropFeature() {
         </div>
       </div>
     </div>
-  )
+  );
 }

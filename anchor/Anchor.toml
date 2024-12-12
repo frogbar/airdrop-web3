@@ -19,8 +19,8 @@ wallet = "~/.config/solana/id.json"
 test = "../node_modules/.bin/jest --preset ts-jest"
 
 [test]
-startup_wait = 5000
-shutdown_wait = 2000
+startup_wait = 10000
+shutdown_wait = 5000
 upgradeable = false
 
 [test.validator]
