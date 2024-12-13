@@ -6,12 +6,18 @@ import { WalletButton } from "../solana/solana-provider";
 import { AppHero, ellipsify } from "../ui/ui-layout";
 import { ExplorerLink } from "../cluster/cluster-ui";
 import { usePepedropProgram } from "./pepedrop-data-access";
-import { PepedropList, InitializeVaultModal, ClaimList } from "./pepedrop-ui";
+import {
+  PepedropList,
+  InitializeVaultModal,
+  ClaimList,
+  InitializeOkxVaultModal,
+} from "./pepedrop-ui";
 
 export default function PepedropFeature() {
   const { publicKey } = useWallet();
   const { programId } = usePepedropProgram();
   const [showInitModal, setShowInitModal] = useState(false);
+  const [showOkxInitModal, setShowOkxInitModal] = useState(false);
 
   return publicKey ? (
     <div>
@@ -28,12 +34,20 @@ export default function PepedropFeature() {
               label={ellipsify(programId.toString())}
             />
           </p>
-          <button
-            className="btn btn-primary"
-            onClick={() => setShowInitModal(true)}
-          >
-            Initialize Vault
-          </button>
+          <div className="space-x-4">
+            <button
+              className="btn btn-primary bg-[#641AE6] hover:bg-[#4F15B3]"
+              onClick={() => setShowInitModal(true)}
+            >
+              Initialize Vault
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowOkxInitModal(true)}
+            >
+              Initialize OKX Vault
+            </button>
+          </div>
         </div>
       </AppHero>
       <div className="space-y-8">
@@ -43,6 +57,10 @@ export default function PepedropFeature() {
       <InitializeVaultModal
         show={showInitModal}
         hide={() => setShowInitModal(false)}
+      />
+      <InitializeOkxVaultModal
+        show={showOkxInitModal}
+        hide={() => setShowOkxInitModal(false)}
       />
     </div>
   ) : (

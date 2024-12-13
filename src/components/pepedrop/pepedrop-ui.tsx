@@ -2,16 +2,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
 import {
+  getTokenProgramId,
   usePepedropProgram,
   usePepedropProgramAccount,
 } from "./pepedrop-data-access";
 import { AppModal } from "../ui/ui-layout";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { getMint } from "@solana/spl-token";
+import { getMint as getSolanaMint } from "@solana/spl-token";
+
+const getMint = async (connection: Connection, mint: PublicKey) => {
+  const tokenProgramId = await getTokenProgramId(connection, mint);
+  return getSolanaMint(connection, mint, "confirmed", tokenProgramId);
+};
 
 export function InitializeVaultModal({
   show,
@@ -392,4 +398,115 @@ function formatTokenAmount(amount: BN, decimals: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,
   });
+}
+
+export function InitializeOkxVaultModal({
+  show,
+  hide,
+}: {
+  show: boolean;
+  hide: () => void;
+}) {
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
+  const { initializeOkxTokenVault } = usePepedropProgram();
+  const [vaultName, setVaultName] = useState("");
+  const [mintAddress, setMintAddress] = useState("");
+  const [totalTokens, setTotalTokens] = useState("");
+  const [mintInfo, setMintInfo] = useState<{ decimals: number } | null>(null);
+
+  useEffect(() => {
+    const getMintInfo = async () => {
+      if (!mintAddress) {
+        setMintInfo(null);
+        return;
+      }
+      try {
+        const mint = new PublicKey(mintAddress);
+        const mintAccount = await getMint(connection, mint);
+        setMintInfo(mintAccount);
+      } catch (error) {
+        console.error("Error fetching mint info:", error);
+        setMintInfo(null);
+      }
+    };
+    getMintInfo();
+  }, [connection, mintAddress]);
+
+  const handleSubmit = async () => {
+    try {
+      if (!mintInfo) throw new Error("Mint info not loaded");
+
+      const mint = new PublicKey(mintAddress);
+      const rawAmount = parseFloat(totalTokens);
+      const adjustedAmount = rawAmount * Math.pow(10, mintInfo.decimals);
+
+      await initializeOkxTokenVault.mutateAsync({
+        mint,
+        owner: publicKey!,
+        vaultName,
+        totalTokens: new BN(adjustedAmount),
+      });
+      hide();
+    } catch (error) {
+      console.error("Error creating OKX token vault:", error);
+    }
+  };
+
+  return (
+    <AppModal
+      title="Initialize OKX Token Vault"
+      show={show}
+      hide={hide}
+      submit={handleSubmit}
+      submitDisabled={
+        !vaultName ||
+        !mintAddress ||
+        !totalTokens ||
+        initializeOkxTokenVault.isPending
+      }
+      submitLabel="Create OKX Vault"
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="label">
+            <span className="label-text">Vault Name</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered w-full"
+            value={vaultName}
+            onChange={(e) => setVaultName(e.target.value)}
+            placeholder="Enter vault name"
+          />
+        </div>
+
+        <div>
+          <label className="label">
+            <span className="label-text">Mint Address</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered w-full"
+            value={mintAddress}
+            onChange={(e) => setMintAddress(e.target.value)}
+            placeholder="Enter token mint address"
+          />
+        </div>
+
+        <div>
+          <label className="label">
+            <span className="label-text">Total Tokens</span>
+          </label>
+          <input
+            type="number"
+            className="input input-bordered w-full"
+            value={totalTokens}
+            onChange={(e) => setTotalTokens(e.target.value)}
+            placeholder="Enter total tokens"
+          />
+        </div>
+      </div>
+    </AppModal>
+  );
 }

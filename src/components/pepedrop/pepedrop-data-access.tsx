@@ -29,7 +29,7 @@ type InitializeTokenVaultParams = {
   totalTokens: BN;
 };
 
-async function getTokenProgramId(
+export async function getTokenProgramId(
   connection: Connection,
   mint: PublicKey
 ): Promise<PublicKey> {
@@ -40,16 +40,21 @@ async function getTokenProgramId(
       token2022Account &&
       token2022Account.owner.equals(TOKEN_2022_PROGRAM_ID)
     ) {
-      console.log("Using Token-2022 Program");
       return TOKEN_2022_PROGRAM_ID;
     }
-  } catch (e) {
-    console.log("Error checking Token-2022:", e);
-  }
 
-  // Default to regular Token program
-  console.log("Using regular Token Program");
-  return TOKEN_PROGRAM_ID;
+    // Try regular Token program
+    const tokenAccount = await connection.getAccountInfo(mint, "confirmed");
+    if (tokenAccount && tokenAccount.owner.equals(TOKEN_PROGRAM_ID)) {
+      return TOKEN_PROGRAM_ID;
+    }
+
+    throw new Error("Invalid token mint account");
+  } catch (e) {
+    console.log("Error checking token program:", e);
+    // Default to regular Token program
+    return TOKEN_PROGRAM_ID;
+  }
 }
 
 export function usePepedropProgram() {
@@ -142,6 +147,62 @@ export function usePepedropProgram() {
     },
   });
 
+  const initializeOkxTokenVault = useMutation<
+    string,
+    Error,
+    InitializeTokenVaultParams
+  >({
+    mutationKey: ["pepedrop", "initialize-okx-token-vault", { cluster }],
+    mutationFn: async ({ mint, vaultName, totalTokens }) => {
+      if (!publicKey) throw new Error("Wallet not connected");
+
+      const tokenProgramId = await getTokenProgramId(connection, mint);
+
+      // Get the associated token account for the wallet and mint
+      const sourceTokenAccount = await getAssociatedTokenAddress(
+        mint,
+        publicKey,
+        false, // allowOwnerOffCurve
+        tokenProgramId // Specify the token program ID
+      );
+
+      // Check if the token account exists
+      const accountInfo = await connection.getAccountInfo(sourceTokenAccount);
+      if (!accountInfo) {
+        throw new Error(
+          "Token account not initialized. Please create a token account first."
+        );
+      }
+
+      console.log("Initializing okx token vault", {
+        vaultName,
+        totalTokens,
+        mint,
+        publicKey,
+        tokenProgramId,
+        sourceTokenAccount,
+      });
+
+      return program.methods
+        .initializeTokenVaultForOkx(vaultName, totalTokens)
+        .accounts({
+          owner: publicKey,
+          mint: mint,
+          tokenProgram: tokenProgramId,
+          sourceTokenAccount,
+        })
+        .rpc();
+    },
+    onSuccess: (signature) => {
+      transactionToast(signature);
+      return ownedTokenVaults.refetch();
+    },
+    onError: (error) => {
+      console.error("Initialize okx vault error:", error);
+      toast.error(`Failed to initialize okx token vault: ${error.message}`);
+    },
+  });
+
   return {
     connection,
     program,
@@ -149,6 +210,7 @@ export function usePepedropProgram() {
     getProgramAccount,
     ownedTokenVaults,
     initializeTokenVault,
+    initializeOkxTokenVault,
     publicKey,
   };
 }
