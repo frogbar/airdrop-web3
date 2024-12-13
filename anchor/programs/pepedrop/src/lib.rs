@@ -6,7 +6,7 @@ use anchor_spl::{
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-declare_id!("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF");
+declare_id!("9Mu7L3HxfpCDeSTLYHxo6o9euY2G1APmoiHYfjGya4Jk");
 
 fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
     let current_time = Clock::get().unwrap().unix_timestamp;
@@ -78,6 +78,7 @@ pub mod pepedrop {
         *ctx.accounts.claim_account = ClaimAccount {
             beneficiary: ctx.accounts.beneficiary.key(),
             token_vault: ctx.accounts.token_vault.key(),
+            mint: ctx.accounts.token_vault.mint.key(),
             total_tokens: amount,
             tokens_claimed: 0,
             created_at: Clock::get()?.unix_timestamp,
@@ -234,6 +235,7 @@ pub struct IntializeTokenVault<'info> {
 #[account]
 #[derive(InitSpace)]
 pub struct TokenVault {
+    pub owner: Pubkey,
     #[max_len(40)]
     pub vault_name: String,
     pub mint: Pubkey,
@@ -244,7 +246,6 @@ pub struct TokenVault {
     pub total_token_holders: u64,
     pub bump: u8,
     pub treasury_bump: u8,
-    pub owner: Pubkey,
 }
 
 #[derive(Accounts)]
@@ -327,6 +328,7 @@ pub struct ClaimTokens<'info> {
 pub struct ClaimAccount {
     pub beneficiary: Pubkey,
     pub token_vault: Pubkey,
+    pub mint: Pubkey,
     pub total_tokens: u64,
     pub tokens_claimed: u64,
     pub created_at: i64,

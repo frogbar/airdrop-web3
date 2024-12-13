@@ -1,5 +1,5 @@
 {
-  "address": "coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF",
+  "address": "9Mu7L3HxfpCDeSTLYHxo6o9euY2G1APmoiHYfjGya4Jk",
   "metadata": {
     "name": "pepedrop",
     "version": "0.1.0",
@@ -721,6 +721,10 @@
             "type": "pubkey"
           },
           {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
             "name": "total_tokens",
             "type": "u64"
           },
@@ -744,6 +748,10 @@
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
           {
             "name": "vault_name",
             "type": "string"
@@ -779,10 +787,6 @@
           {
             "name": "treasury_bump",
             "type": "u8"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
           }
         ]
       }

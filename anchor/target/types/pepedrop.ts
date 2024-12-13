@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/pepedrop.json`.
  */
 export type Pepedrop = {
-  "address": "coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF",
+  "address": "9Mu7L3HxfpCDeSTLYHxo6o9euY2G1APmoiHYfjGya4Jk",
   "metadata": {
     "name": "pepedrop",
     "version": "0.1.0",
@@ -727,6 +727,10 @@ export type Pepedrop = {
             "type": "pubkey"
           },
           {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
             "name": "totalTokens",
             "type": "u64"
           },
@@ -750,6 +754,10 @@ export type Pepedrop = {
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
           {
             "name": "vaultName",
             "type": "string"
@@ -785,10 +793,6 @@ export type Pepedrop = {
           {
             "name": "treasuryBump",
             "type": "u8"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
           }
         ]
       }
