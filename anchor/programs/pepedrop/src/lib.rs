@@ -36,6 +36,7 @@ pub mod pepedrop {
     ) -> Result<()> {
         *ctx.accounts.token_vault = TokenVault {
             vault_name,
+            owner: ctx.accounts.owner.key(),
             mint: ctx.accounts.mint.key(),
             total_tokens,
             treasury: ctx.accounts.treasury.key(),
@@ -134,6 +135,7 @@ pub mod pepedrop {
     ) -> Result<()> {
         *ctx.accounts.token_vault = TokenVault {
             vault_name,
+            owner: ctx.accounts.owner.key(),
             mint: ctx.accounts.mint.key(),
             total_tokens,
             treasury: ctx.accounts.treasury.key(),
@@ -165,6 +167,10 @@ pub mod pepedrop {
         ctx: Context<SendTokensToOkx>,
         amount: u64,
     ) -> Result<()> {
+        require!(
+            amount <= ctx.accounts.treasury.amount,
+            PepeDropError::InsufficientTokens
+        );
 
         let token_vault_key = ctx.accounts.token_vault.key();
         let signer_seeds: &[&[&[u8]]] = &[&[
@@ -238,6 +244,7 @@ pub struct TokenVault {
     pub total_token_holders: u64,
     pub bump: u8,
     pub treasury_bump: u8,
+    pub owner: Pubkey,
 }
 
 #[derive(Accounts)]
@@ -262,6 +269,7 @@ pub struct CreateClaimAccount<'info> {
         mut,
         seeds = [b"token_vault".as_ref(), mint.key().as_ref()],
         bump,
+        constraint = token_vault.owner == signer.key()
     )]
     pub token_vault: Account<'info, TokenVault>,
 
@@ -371,7 +379,8 @@ pub struct SendTokensToOkx<'info> {
         mut,
         seeds = [b"token_vault_okx".as_ref(), mint.key().as_ref(), owner.key().as_ref()],
         bump,
-        has_one = treasury
+        has_one = treasury,
+        constraint = token_vault.owner == owner.key()
     )]
     pub token_vault: Account<'info, TokenVault>,
 

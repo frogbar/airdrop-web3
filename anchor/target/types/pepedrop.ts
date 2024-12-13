@@ -785,6 +785,10 @@ export type Pepedrop = {
           {
             "name": "treasuryBump",
             "type": "u8"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
           }
         ]
       }

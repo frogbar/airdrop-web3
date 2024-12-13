@@ -779,6 +779,10 @@
           {
             "name": "treasury_bump",
             "type": "u8"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
           }
         ]
       }
