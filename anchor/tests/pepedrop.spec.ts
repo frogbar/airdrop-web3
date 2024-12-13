@@ -43,7 +43,7 @@ async function advanceTimeAndClaim(
 
   // Attempt to claim tokens
   return program.methods
-    .claimTokens(tokenName)
+    .claimTokens()
     .accounts({
       mint: mint,
       tokenProgram: TOKEN_PROGRAM_ID,
@@ -78,6 +78,7 @@ describe("pepedrop", () => {
   let program2: Program<Pepedrop>;
   let tokenVaultAccount: PublicKey;
   let tokenVaultAccountKey: PublicKey;
+  let tokenVaultOkxAccountKey: PublicKey;
   let claimAccount: PublicKey;
   let claimAccountKey: PublicKey;
   let creatorTokenAccount: PublicKey;
@@ -125,7 +126,12 @@ describe("pepedrop", () => {
     mint = await createMint(banksClient, creator, creator.publicKey, null, 2);
 
     [tokenVaultAccountKey] = PublicKey.findProgramAddressSync(
-      [Buffer.from("token_vault"), Buffer.from(tokenName)],
+      [Buffer.from("token_vault"), mint.toBuffer()],
+      program.programId
+    );
+
+    [tokenVaultOkxAccountKey] = PublicKey.findProgramAddressSync(
+      [Buffer.from("token_vault_okx"), mint.toBuffer()],
       program.programId
     );
 
@@ -196,8 +202,9 @@ describe("pepedrop", () => {
 
   it("should create a claim account", async () => {
     const tx = await program.methods
-      .createClaimAccount(tokenName, new BN(claimAmount))
+      .createClaimAccount(new BN(claimAmount))
       .accounts({
+        mint,
         signer: creator.publicKey,
         beneficiary: beneficiary.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -307,5 +314,38 @@ describe("pepedrop", () => {
       // Verify that the error matches PepeDropError::InsufficientUnlockedTokens
       expect(error.toString()).toContain("InsufficientUnlockedTokens");
     }
+  });
+
+  it("should create a token vault for okx", async () => {
+    const tx = await program.methods
+      .initializeTokenVaultForOkx(tokenName, new BN(totalAmount))
+      .accounts({
+        owner: creator.publicKey,
+        mint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        sourceTokenAccount: creatorTokenAccount,
+      })
+      .rpc();
+
+    const tokenVaultOkxAccountData = await program.account.tokenVault.fetch(
+      tokenVaultOkxAccountKey,
+      "confirmed"
+    );
+
+    console.log(tokenVaultOkxAccountData);
+    expect(tokenVaultOkxAccountData.vaultName).toBe(tokenName);
+    expect(tokenVaultOkxAccountData.totalTokens.toNumber()).toBe(totalAmount);
+  });
+
+  it("should send tokens to okx", async () => {
+    const tx = await program.methods
+      .sendTokensToOkx(new BN(claimAmount))
+      .accounts({
+        owner: creator.publicKey,
+        mint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        destinationWallet: beneficiary.publicKey,
+      })
+      .rpc();
   });
 });

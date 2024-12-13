@@ -65,7 +65,6 @@ pub mod pepedrop {
 
     pub fn create_claim_account(
         ctx: Context<CreateClaimAccount>,
-        _vault_name: String,
         amount: u64,
     ) -> Result<()> {
         require!(
@@ -90,7 +89,6 @@ pub mod pepedrop {
 
     pub fn claim_tokens(
         ctx: Context<ClaimTokens>,
-        _vault_name: String,
     ) -> Result<()> {
         // Check if amount is available based on vesting schedule
         let available = calculate_available_tokens(ctx.accounts.claim_account.total_tokens, ctx.accounts.claim_account.created_at);  
@@ -129,10 +127,70 @@ pub mod pepedrop {
         transfer_checked(cpi_ctx, claimable, ctx.accounts.mint.decimals)?;
         Ok(())
     }
+
+    pub fn initialize_token_vault_for_okx(
+        ctx: Context<IntializeTokenVaultForOkx>,
+        vault_name: String,
+        total_tokens: u64,
+    ) -> Result<()> {
+        *ctx.accounts.token_vault = TokenVault {
+            vault_name,
+            mint: ctx.accounts.mint.key(),
+            total_tokens,
+            treasury: ctx.accounts.treasury.key(),
+            tokens_released: 0,
+            tokens_claimed: 0,
+            total_token_holders: 0,
+            bump: ctx.bumps.token_vault,
+            treasury_bump: ctx.bumps.treasury,
+        };
+
+        let transfer_cpi_accounts = TransferChecked {
+            from: ctx.accounts.source_token_account.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.treasury.to_account_info(),
+            authority: ctx.accounts.owner.to_account_info(),
+        };
+
+        let cpi_ctx = CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            transfer_cpi_accounts,
+        );
+
+        transfer_checked(cpi_ctx, total_tokens, ctx.accounts.mint.decimals)?; 
+        Ok(())
+    }
+
+
+    pub fn send_tokens_to_okx(
+        ctx: Context<SendTokensToOkx>,
+        amount: u64,
+    ) -> Result<()> {
+
+        let token_vault_key = ctx.accounts.token_vault.key();
+        let signer_seeds: &[&[&[u8]]] = &[&[
+            b"treasury".as_ref(),
+            token_vault_key.as_ref(),
+            &[ctx.accounts.token_vault.treasury_bump],
+        ]];
+
+        let transfer_cpi_accounts = TransferChecked {
+            from: ctx.accounts.treasury.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.destination_token_account.to_account_info(),
+            authority: ctx.accounts.treasury.to_account_info(),
+        };
+
+
+        let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_cpi_accounts).with_signer(signer_seeds);
+
+        transfer_checked(cpi_ctx, amount, ctx.accounts.mint.decimals)?;
+        ctx.accounts.token_vault.tokens_claimed += amount;
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
-#[instruction(vault_name: String)]
 pub struct IntializeTokenVault<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
@@ -141,7 +199,7 @@ pub struct IntializeTokenVault<'info> {
         init,
         payer = owner,
         space = 8 + TokenVault::INIT_SPACE,
-        seeds = [b"token_vault".as_ref(), vault_name.as_bytes()],
+        seeds = [b"token_vault".as_ref(), mint.key().as_ref()],
         bump
 
     )]
@@ -184,7 +242,6 @@ pub struct TokenVault {
 }
 
 #[derive(Accounts)]
-#[instruction(vault_name: String)]
 pub struct CreateClaimAccount<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -196,16 +253,16 @@ pub struct CreateClaimAccount<'info> {
         payer = signer,
         space = 8 + ClaimAccount::INIT_SPACE,
         seeds = [b"claim_account".as_ref(), token_vault.key().as_ref(), beneficiary.key().as_ref()],
-        bump
+        bump,
     )]
     pub claim_account: Account<'info, ClaimAccount>,
+    
 
 
     #[account(
         mut,
-        seeds = [b"token_vault".as_ref(), vault_name.as_bytes()],
+        seeds = [b"token_vault".as_ref(), mint.key().as_ref()],
         bump,
-        has_one = mint
     )]
     pub token_vault: Account<'info, TokenVault>,
 
@@ -217,7 +274,6 @@ pub struct CreateClaimAccount<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(vault_name: String)]
 pub struct ClaimTokens<'info> {
     #[account(mut)]
     pub beneficiary: Signer<'info>,
@@ -232,7 +288,7 @@ pub struct ClaimTokens<'info> {
     pub claim_account: Account<'info, ClaimAccount>,
 
     #[account(mut,
-        seeds = [b"token_vault".as_ref(), vault_name.as_bytes()],
+        seeds = [b"token_vault".as_ref(), mint.key().as_ref()],
         has_one = treasury,
         bump
     )]
@@ -269,6 +325,87 @@ pub struct ClaimAccount {
     pub created_at: i64,
     pub bump: u8,
 }
+
+
+#[derive(Accounts)]
+pub struct IntializeTokenVaultForOkx<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    #[account(
+        init,
+        payer = owner,
+        space = 8 + TokenVault::INIT_SPACE,
+        seeds = [b"token_vault_okx".as_ref(), mint.key().as_ref()],
+        bump
+
+    )]
+    pub token_vault: Account<'info, TokenVault>,
+    pub mint: InterfaceAccount<'info, Mint>,
+
+    #[account(
+        init,
+        payer = owner,
+        token::mint = mint,
+        token::authority = treasury,
+        seeds = [b"treasury".as_ref(), token_vault.key().as_ref()],
+        bump
+    )]
+    pub treasury: InterfaceAccount<'info, TokenAccount>,
+    pub system_program: Program<'info, System>,
+    pub token_program: Interface<'info, TokenInterface>,
+
+    #[account(
+        mut,
+        token::mint = mint,
+        token::authority = owner
+    )]
+    pub source_token_account: InterfaceAccount<'info, TokenAccount>,
+}
+
+#[derive(Accounts)]
+pub struct SendTokensToOkx<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"token_vault_okx".as_ref(), mint.key().as_ref()],
+        bump,
+        has_one = treasury
+    )]
+    pub token_vault: Account<'info, TokenVault>,
+
+    pub mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
+    pub system_program: Program<'info, System>,
+
+    #[account(
+        mut,
+        seeds = [b"treasury".as_ref(), token_vault.key().as_ref()],
+        bump
+    )]
+    pub treasury: InterfaceAccount<'info, TokenAccount>,
+
+    #[account(
+        init_if_needed,
+        payer = owner,
+        associated_token::mint = mint,
+        associated_token::authority = destination_wallet,
+        associated_token::token_program = token_program,
+    )]
+    pub destination_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    /// The wallet that owns the destination token account
+    pub destination_wallet: SystemAccount<'info>,
+
+    pub associated_token_program: Program<'info, AssociatedToken>,
+}
+
+
+
+
+
 
 #[error_code]
 pub enum PepeDropError {

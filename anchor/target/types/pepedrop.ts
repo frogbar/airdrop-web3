@@ -90,8 +90,8 @@ export type Pepedrop = {
                 ]
               },
               {
-                "kind": "arg",
-                "path": "vaultName"
+                "kind": "account",
+                "path": "mint"
               }
             ]
           },
@@ -199,12 +199,7 @@ export type Pepedrop = {
           "name": "tokenProgram"
         }
       ],
-      "args": [
-        {
-          "name": "vaultName",
-          "type": "string"
-        }
-      ]
+      "args": []
     },
     {
       "name": "createClaimAccount",
@@ -283,17 +278,14 @@ export type Pepedrop = {
                 ]
               },
               {
-                "kind": "arg",
-                "path": "vaultName"
+                "kind": "account",
+                "path": "mint"
               }
             ]
           }
         },
         {
-          "name": "mint",
-          "relations": [
-            "tokenVault"
-          ]
+          "name": "mint"
         },
         {
           "name": "tokenProgram"
@@ -304,10 +296,6 @@ export type Pepedrop = {
         }
       ],
       "args": [
-        {
-          "name": "vaultName",
-          "type": "string"
-        },
         {
           "name": "amount",
           "type": "u64"
@@ -354,8 +342,8 @@ export type Pepedrop = {
                 ]
               },
               {
-                "kind": "arg",
-                "path": "vaultName"
+                "kind": "account",
+                "path": "mint"
               }
             ]
           }
@@ -407,6 +395,270 @@ export type Pepedrop = {
         },
         {
           "name": "totalTokens",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initializeTokenVaultForOkx",
+      "discriminator": [
+        70,
+        187,
+        48,
+        227,
+        158,
+        57,
+        119,
+        151
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "tokenVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  95,
+                  111,
+                  107,
+                  120
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "tokenVault"
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "sourceTokenAccount",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "vaultName",
+          "type": "string"
+        },
+        {
+          "name": "totalTokens",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "sendTokensToOkx",
+      "discriminator": [
+        132,
+        155,
+        84,
+        227,
+        215,
+        229,
+        3,
+        103
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "tokenVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  95,
+                  111,
+                  107,
+                  120
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "tokenProgram"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "tokenVault"
+              }
+            ]
+          },
+          "relations": [
+            "tokenVault"
+          ]
+        },
+        {
+          "name": "destinationTokenAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "destinationWallet"
+              },
+              {
+                "kind": "account",
+                "path": "tokenProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "destinationWallet",
+          "docs": [
+            "The wallet that owns the destination token account"
+          ]
+        },
+        {
+          "name": "associatedTokenProgram",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
           "type": "u64"
         }
       ]
