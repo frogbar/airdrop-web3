@@ -131,7 +131,11 @@ describe("pepedrop", () => {
     );
 
     [tokenVaultOkxAccountKey] = PublicKey.findProgramAddressSync(
-      [Buffer.from("token_vault_okx"), mint.toBuffer()],
+      [
+        Buffer.from("token_vault_okx"),
+        mint.toBuffer(),
+        creator.publicKey.toBuffer(),
+      ],
       program.programId
     );
 

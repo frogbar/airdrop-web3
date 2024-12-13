@@ -439,6 +439,10 @@
               {
                 "kind": "account",
                 "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
               }
             ]
           }
@@ -540,6 +544,10 @@
               {
                 "kind": "account",
                 "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
               }
             ]
           }

@@ -1,7 +1,6 @@
 #![allow(clippy::result_large_err)]
 
 use anchor_lang::prelude::*;
-use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
@@ -336,7 +335,7 @@ pub struct IntializeTokenVaultForOkx<'info> {
         init,
         payer = owner,
         space = 8 + TokenVault::INIT_SPACE,
-        seeds = [b"token_vault_okx".as_ref(), mint.key().as_ref()],
+        seeds = [b"token_vault_okx".as_ref(), mint.key().as_ref(), owner.key().as_ref()],
         bump
 
     )]
@@ -370,7 +369,7 @@ pub struct SendTokensToOkx<'info> {
 
     #[account(
         mut,
-        seeds = [b"token_vault_okx".as_ref(), mint.key().as_ref()],
+        seeds = [b"token_vault_okx".as_ref(), mint.key().as_ref(), owner.key().as_ref()],
         bump,
         has_one = treasury
     )]

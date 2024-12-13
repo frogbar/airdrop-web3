@@ -445,6 +445,10 @@ export type Pepedrop = {
               {
                 "kind": "account",
                 "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
               }
             ]
           }
@@ -546,6 +550,10 @@ export type Pepedrop = {
               {
                 "kind": "account",
                 "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
               }
             ]
           }
