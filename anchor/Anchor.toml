@@ -5,14 +5,14 @@ anchor_version = "0.30.1"
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-pepedrop = "9Mu7L3HxfpCDeSTLYHxo6o9euY2G1APmoiHYfjGya4Jk"
+[programs.devnet]
+pepedrop = "BPQWCYj3hrFeTQQ6mEeQkiVkTN23J2rDucArc6jDs3eM"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

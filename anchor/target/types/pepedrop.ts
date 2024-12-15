@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/pepedrop.json`.
  */
 export type Pepedrop = {
-  "address": "9Mu7L3HxfpCDeSTLYHxo6o9euY2G1APmoiHYfjGya4Jk",
+  "address": "BPQWCYj3hrFeTQQ6mEeQkiVkTN23J2rDucArc6jDs3eM",
   "metadata": {
     "name": "pepedrop",
     "version": "0.1.0",

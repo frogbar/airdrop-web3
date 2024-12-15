@@ -6,24 +6,46 @@ use anchor_spl::{
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-declare_id!("9Mu7L3HxfpCDeSTLYHxo6o9euY2G1APmoiHYfjGya4Jk");
+declare_id!("BPQWCYj3hrFeTQQ6mEeQkiVkTN23J2rDucArc6jDs3eM");
 
 fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
     let current_time = Clock::get().unwrap().unix_timestamp;
     let days_elapsed = (current_time - created_at) / (24 * 60 * 60);
     
-    // Initial 20% immediately
-    let initial_unlock = (total_tokens * 20) / 100;
+    // Initial 10% immediately
+    let initial_unlock = (total_tokens * 10) / 100;
     
     // Calculate number of 14-day periods that have passed
     let periods = (days_elapsed / 14) as u64;
     
-    // Each period unlocks 10%, up to the remaining 80%
-    let additional_periods = std::cmp::min(8, periods); // 8 periods of 10% = 80%
+    // Each period unlocks 10%, up to the remaining 90%
+    let additional_periods = std::cmp::min(9, periods); // 9 periods of 10% = 90%
     let additional_unlock = (total_tokens * 10 * additional_periods) / 100;
 
     initial_unlock + additional_unlock
 }
+
+// fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
+//     let current_time = Clock::get().unwrap().unix_timestamp;
+
+//     // Calculate time elapsed in seconds
+//     let seconds_elapsed = current_time - created_at;
+
+//     // Convert elapsed time to 5-minute intervals
+//     let intervals_elapsed = seconds_elapsed / (5 * 60);
+
+//     // Initial 10% immediately
+//     let initial_unlock = (total_tokens * 10) / 100;
+
+//     // Calculate the number of intervals that have passed (up to 9)
+//     let additional_intervals = std::cmp::min(9, intervals_elapsed as u64);
+
+//     // Each interval unlocks an additional 10%
+//     let additional_unlock = (total_tokens * 10 * additional_intervals) / 100;
+
+//     // Total unlocked tokens
+//     initial_unlock + additional_unlock
+// }
 
 #[program]
 pub mod pepedrop {
