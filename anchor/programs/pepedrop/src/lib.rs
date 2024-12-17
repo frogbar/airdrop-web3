@@ -139,6 +139,14 @@ pub mod pepedrop {
         let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_cpi_accounts).with_signer(signer_seeds);
 
         transfer_checked(cpi_ctx, claimable, ctx.accounts.mint.decimals)?;
+        
+        // Emit event after successful transfer
+        emit!(TokensClaimed {
+            beneficiary: ctx.accounts.beneficiary.key(),
+            amount: claimable,
+            remaining: ctx.accounts.treasury.amount
+        });
+        
         Ok(())
     }
 
@@ -186,6 +194,8 @@ pub mod pepedrop {
             PepeDropError::InsufficientTokens
         );
 
+        ctx.accounts.token_vault.tokens_claimed += amount;
+
         let token_vault_key = ctx.accounts.token_vault.key();
         let signer_seeds: &[&[&[u8]]] = &[&[
             b"treasury".as_ref(),
@@ -204,7 +214,14 @@ pub mod pepedrop {
         let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_cpi_accounts).with_signer(signer_seeds);
 
         transfer_checked(cpi_ctx, amount, ctx.accounts.mint.decimals)?;
-        ctx.accounts.token_vault.tokens_claimed += amount;
+        
+        // Emit event after successful transfer
+        emit!(TokensSentToOkx {
+            destination: ctx.accounts.destination_wallet.key(),
+            amount,
+            remaining: ctx.accounts.treasury.amount
+        });
+        
         Ok(())
     }
 }
@@ -438,4 +455,18 @@ pub enum PepeDropError {
     InsufficientUnlockedTokens,
     #[msg("Arithmetic error")]
     ArithmeticError,
+}
+
+#[event]
+pub struct TokensClaimed {
+    pub beneficiary: Pubkey,
+    pub amount: u64,
+    pub remaining: u64,
+}
+
+#[event]
+pub struct TokensSentToOkx {
+    pub destination: Pubkey,
+    pub amount: u64,
+    pub remaining: u64,
 }
