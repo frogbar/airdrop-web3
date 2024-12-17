@@ -9,7 +9,7 @@ use anchor_spl::{
 declare_id!("pyg7Rgvvw35upbJooTv9aFgdrq6pJubr4dCxusy8T1X");
 
 fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
-    let current_time = Clock::get().unwrap().unix_timestamp;
+    let current_time = Clock::get()?.unix_timestamp; // replaced .unwrap() with ?
     let days_elapsed = (current_time - created_at) / (24 * 60 * 60);
     
     // Initial 10% immediately
@@ -20,8 +20,19 @@ fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
     
     // Each period unlocks 10%, up to the remaining 90%
     let additional_periods = std::cmp::min(9, periods); // 9 periods of 10% = 90%
-    let additional_unlock = (total_tokens * 10 * additional_periods) / 100;
+    // let additional_unlock = (total_tokens * 10 * additional_periods) / 100;
+    // 
+    // initial_unlock + additional_unlock
 
+     // Safe calculation for additional unlock
+    let additional_unlock = total_tokens.checked_mul(10)
+        .ok_or(ErrorCode::ArithmeticError)?
+        .checked_mul(additional_periods)
+        .ok_or(ErrorCode::ArithmeticError)?
+        .checked_div(100)
+        .ok_or(ErrorCode::ArithmeticError)?;
+    
+        // Total unlocked tokens
     initial_unlock + additional_unlock
 }
 
@@ -190,8 +201,11 @@ pub mod pepedrop {
 
         let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_cpi_accounts).with_signer(signer_seeds);
 
-        transfer_checked(cpi_ctx, amount, ctx.accounts.mint.decimals)?;
+        // this code brought to the top
         ctx.accounts.token_vault.tokens_claimed += amount;
+        
+        transfer_checked(cpi_ctx, amount, ctx.accounts.mint.decimals)?;
+        // replaced code from here
         Ok(())
     }
 }
