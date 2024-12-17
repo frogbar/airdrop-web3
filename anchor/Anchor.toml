@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-pepedrop = "BPQWCYj3hrFeTQQ6mEeQkiVkTN23J2rDucArc6jDs3eM"
+pepedrop = "pyg7Rgvvw35upbJooTv9aFgdrq6pJubr4dCxusy8T1X"
 
 [registry]
 url = "https://api.apr.dev"

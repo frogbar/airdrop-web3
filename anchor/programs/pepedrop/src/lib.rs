@@ -6,7 +6,7 @@ use anchor_spl::{
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-declare_id!("BPQWCYj3hrFeTQQ6mEeQkiVkTN23J2rDucArc6jDs3eM");
+declare_id!("pyg7Rgvvw35upbJooTv9aFgdrq6pJubr4dCxusy8T1X");
 
 fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
     let current_time = Clock::get().unwrap().unix_timestamp;
@@ -24,28 +24,6 @@ fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
 
     initial_unlock + additional_unlock
 }
-
-// fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
-//     let current_time = Clock::get().unwrap().unix_timestamp;
-
-//     // Calculate time elapsed in seconds
-//     let seconds_elapsed = current_time - created_at;
-
-//     // Convert elapsed time to 5-minute intervals
-//     let intervals_elapsed = seconds_elapsed / (5 * 60);
-
-//     // Initial 10% immediately
-//     let initial_unlock = (total_tokens * 10) / 100;
-
-//     // Calculate the number of intervals that have passed (up to 9)
-//     let additional_intervals = std::cmp::min(9, intervals_elapsed as u64);
-
-//     // Each interval unlocks an additional 10%
-//     let additional_unlock = (total_tokens * 10 * additional_intervals) / 100;
-
-//     // Total unlocked tokens
-//     initial_unlock + additional_unlock
-// }
 
 #[program]
 pub mod pepedrop {
@@ -433,11 +411,6 @@ pub struct SendTokensToOkx<'info> {
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
-
-
-
-
-
 
 #[error_code]
 pub enum PepeDropError {
