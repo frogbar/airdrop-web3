@@ -8,21 +8,34 @@ use anchor_spl::{
 
 declare_id!("9Mu7L3HxfpCDeSTLYHxo6o9euY2G1APmoiHYfjGya4Jk");
 
-fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
-    let current_time = Clock::get().unwrap().unix_timestamp;
-    let days_elapsed = (current_time - created_at) / (24 * 60 * 60);
+fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> Result<u64> {
+    let current_time = Clock::get()?.unix_timestamp;
+    let days_elapsed = current_time
+        .checked_sub(created_at)
+        .ok_or(PepeDropError::ArithmeticError)?
+        .checked_div(24 * 60 * 60)
+        .ok_or(PepeDropError::ArithmeticError)?;
     
-    // Initial 20% immediately
-    let initial_unlock = (total_tokens * 20) / 100;
+    let initial_unlock = total_tokens
+        .checked_mul(20)
+        .ok_or(PepeDropError::ArithmeticError)?
+        .checked_div(100)
+        .ok_or(PepeDropError::ArithmeticError)?;
     
-    // Calculate number of 14-day periods that have passed
     let periods = (days_elapsed / 14) as u64;
+    let additional_periods = std::cmp::min(8, periods);
     
-    // Each period unlocks 10%, up to the remaining 80%
-    let additional_periods = std::cmp::min(8, periods); // 8 periods of 10% = 80%
-    let additional_unlock = (total_tokens * 10 * additional_periods) / 100;
+    let additional_unlock = total_tokens
+        .checked_mul(10)
+        .ok_or(PepeDropError::ArithmeticError)?
+        .checked_mul(additional_periods)
+        .ok_or(PepeDropError::ArithmeticError)?
+        .checked_div(100)
+        .ok_or(PepeDropError::ArithmeticError)?;
 
-    initial_unlock + additional_unlock
+    initial_unlock
+        .checked_add(additional_unlock)
+        .ok_or(Error::from(PepeDropError::ArithmeticError))
 }
 
 #[program]
@@ -92,7 +105,7 @@ pub mod pepedrop {
         ctx: Context<ClaimTokens>,
     ) -> Result<()> {
         // Check if amount is available based on vesting schedule
-        let available = calculate_available_tokens(ctx.accounts.claim_account.total_tokens, ctx.accounts.claim_account.created_at);  
+        let available = calculate_available_tokens(ctx.accounts.claim_account.total_tokens, ctx.accounts.claim_account.created_at)?;  
         let claimable = available.saturating_sub(ctx.accounts.claim_account.tokens_claimed);
 
         msg!("Total tokens: {}", ctx.accounts.claim_account.total_tokens);
@@ -423,4 +436,6 @@ pub enum PepeDropError {
     InsufficientTokens,
     #[msg("Insufficient unlocked tokens available to claim")]
     InsufficientUnlockedTokens,
+    #[msg("Arithmetic error")]
+    ArithmeticError,
 }

@@ -704,6 +704,11 @@
       "code": 6001,
       "name": "InsufficientUnlockedTokens",
       "msg": "Insufficient unlocked tokens available to claim"
+    },
+    {
+      "code": 6002,
+      "name": "ArithmeticError",
+      "msg": "Arithmetic error"
     }
   ],
   "types": [

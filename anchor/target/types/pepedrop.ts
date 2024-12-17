@@ -710,6 +710,11 @@ export type Pepedrop = {
       "code": 6001,
       "name": "insufficientUnlockedTokens",
       "msg": "Insufficient unlocked tokens available to claim"
+    },
+    {
+      "code": 6002,
+      "name": "arithmeticError",
+      "msg": "Arithmetic error"
     }
   ],
   "types": [
