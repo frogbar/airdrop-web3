@@ -1,5 +1,5 @@
 {
-  "address": "pyg7Rgvvw35upbJooTv9aFgdrq6pJubr4dCxusy8T1X",
+  "address": "66Hk9sZRHxtQFGr3Y3ZLigg3TnfFRK2aw8kKKJkMwPZq",
   "metadata": {
     "name": "pepedrop",
     "version": "0.1.0",
@@ -694,6 +694,34 @@
       ]
     }
   ],
+  "events": [
+    {
+      "name": "TokensClaimed",
+      "discriminator": [
+        25,
+        128,
+        244,
+        55,
+        241,
+        136,
+        200,
+        91
+      ]
+    },
+    {
+      "name": "TokensSentToOkx",
+      "discriminator": [
+        112,
+        23,
+        8,
+        161,
+        75,
+        43,
+        236,
+        181
+      ]
+    }
+  ],
   "errors": [
     {
       "code": 6000,
@@ -704,6 +732,11 @@
       "code": 6001,
       "name": "InsufficientUnlockedTokens",
       "msg": "Insufficient unlocked tokens available to claim"
+    },
+    {
+      "code": 6002,
+      "name": "ArithmeticError",
+      "msg": "Arithmetic error"
     }
   ],
   "types": [
@@ -787,6 +820,46 @@
           {
             "name": "treasury_bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokensClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "beneficiary",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "remaining",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokensSentToOkx",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "destination",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "remaining",
+            "type": "u64"
           }
         ]
       }

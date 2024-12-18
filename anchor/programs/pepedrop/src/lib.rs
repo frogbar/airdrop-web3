@@ -6,34 +6,36 @@ use anchor_spl::{
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-declare_id!("pyg7Rgvvw35upbJooTv9aFgdrq6pJubr4dCxusy8T1X");
+declare_id!("66Hk9sZRHxtQFGr3Y3ZLigg3TnfFRK2aw8kKKJkMwPZq");
 
-fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> u64 {
-    let current_time = Clock::get()?.unix_timestamp; // replaced .unwrap() with ?
-    let days_elapsed = (current_time - created_at) / (24 * 60 * 60);
+fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> Result<u64> {
+    let current_time = Clock::get()?.unix_timestamp;
+    let days_elapsed = current_time
+        .checked_sub(created_at)
+        .ok_or(PepeDropError::ArithmeticError)?
+        .checked_div(24 * 60 * 60)
+        .ok_or(PepeDropError::ArithmeticError)?;
     
-    // Initial 10% immediately
-    let initial_unlock = (total_tokens * 10) / 100;
-    
-    // Calculate number of 14-day periods that have passed
-    let periods = (days_elapsed / 14) as u64;
-    
-    // Each period unlocks 10%, up to the remaining 90%
-    let additional_periods = std::cmp::min(9, periods); // 9 periods of 10% = 90%
-    // let additional_unlock = (total_tokens * 10 * additional_periods) / 100;
-    // 
-    // initial_unlock + additional_unlock
-
-     // Safe calculation for additional unlock
-    let additional_unlock = total_tokens.checked_mul(10)
-        .ok_or(ErrorCode::ArithmeticError)?
-        .checked_mul(additional_periods)
-        .ok_or(ErrorCode::ArithmeticError)?
+    let initial_unlock = total_tokens
+        .checked_mul(10)
+        .ok_or(PepeDropError::ArithmeticError)?
         .checked_div(100)
-        .ok_or(ErrorCode::ArithmeticError)?;
+        .ok_or(PepeDropError::ArithmeticError)?;
     
-        // Total unlocked tokens
-    initial_unlock + additional_unlock
+    let periods = (days_elapsed / 14) as u64;
+    let additional_periods = std::cmp::min(9, periods);
+    
+    let additional_unlock = total_tokens
+        .checked_mul(10)
+        .ok_or(PepeDropError::ArithmeticError)?
+        .checked_mul(additional_periods)
+        .ok_or(PepeDropError::ArithmeticError)?
+        .checked_div(100)
+        .ok_or(PepeDropError::ArithmeticError)?;
+
+    initial_unlock
+        .checked_add(additional_unlock)
+        .ok_or(Error::from(PepeDropError::ArithmeticError))
 }
 
 #[program]
@@ -103,7 +105,7 @@ pub mod pepedrop {
         ctx: Context<ClaimTokens>,
     ) -> Result<()> {
         // Check if amount is available based on vesting schedule
-        let available = calculate_available_tokens(ctx.accounts.claim_account.total_tokens, ctx.accounts.claim_account.created_at);  
+        let available = calculate_available_tokens(ctx.accounts.claim_account.total_tokens, ctx.accounts.claim_account.created_at)?;  
         let claimable = available.saturating_sub(ctx.accounts.claim_account.tokens_claimed);
 
         msg!("Total tokens: {}", ctx.accounts.claim_account.total_tokens);
@@ -137,6 +139,14 @@ pub mod pepedrop {
         let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_cpi_accounts).with_signer(signer_seeds);
 
         transfer_checked(cpi_ctx, claimable, ctx.accounts.mint.decimals)?;
+        
+        // Emit event after successful transfer
+        emit!(TokensClaimed {
+            beneficiary: ctx.accounts.beneficiary.key(),
+            amount: claimable,
+            remaining: ctx.accounts.treasury.amount
+        });
+        
         Ok(())
     }
 
@@ -184,6 +194,8 @@ pub mod pepedrop {
             PepeDropError::InsufficientTokens
         );
 
+        ctx.accounts.token_vault.tokens_claimed += amount;
+
         let token_vault_key = ctx.accounts.token_vault.key();
         let signer_seeds: &[&[&[u8]]] = &[&[
             b"treasury".as_ref(),
@@ -201,11 +213,15 @@ pub mod pepedrop {
 
         let cpi_ctx = CpiContext::new(ctx.accounts.token_program.to_account_info(), transfer_cpi_accounts).with_signer(signer_seeds);
 
-        // this code brought to the top
-        ctx.accounts.token_vault.tokens_claimed += amount;
-        
         transfer_checked(cpi_ctx, amount, ctx.accounts.mint.decimals)?;
-        // replaced code from here
+        
+        // Emit event after successful transfer
+        emit!(TokensSentToOkx {
+            destination: ctx.accounts.destination_wallet.key(),
+            amount,
+            remaining: ctx.accounts.treasury.amount
+        });
+        
         Ok(())
     }
 }
@@ -432,4 +448,20 @@ pub enum PepeDropError {
     InsufficientTokens,
     #[msg("Insufficient unlocked tokens available to claim")]
     InsufficientUnlockedTokens,
+    #[msg("Arithmetic error")]
+    ArithmeticError,
+}
+
+#[event]
+pub struct TokensClaimed {
+    pub beneficiary: Pubkey,
+    pub amount: u64,
+    pub remaining: u64,
+}
+
+#[event]
+pub struct TokensSentToOkx {
+    pub destination: Pubkey,
+    pub amount: u64,
+    pub remaining: u64,
 }
