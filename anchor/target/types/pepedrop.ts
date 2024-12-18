@@ -700,6 +700,34 @@ export type Pepedrop = {
       ]
     }
   ],
+  "events": [
+    {
+      "name": "tokensClaimed",
+      "discriminator": [
+        25,
+        128,
+        244,
+        55,
+        241,
+        136,
+        200,
+        91
+      ]
+    },
+    {
+      "name": "tokensSentToOkx",
+      "discriminator": [
+        112,
+        23,
+        8,
+        161,
+        75,
+        43,
+        236,
+        181
+      ]
+    }
+  ],
   "errors": [
     {
       "code": 6000,
@@ -710,6 +738,11 @@ export type Pepedrop = {
       "code": 6001,
       "name": "insufficientUnlockedTokens",
       "msg": "Insufficient unlocked tokens available to claim"
+    },
+    {
+      "code": 6002,
+      "name": "arithmeticError",
+      "msg": "Arithmetic error"
     }
   ],
   "types": [
@@ -793,6 +826,46 @@ export type Pepedrop = {
           {
             "name": "treasuryBump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "tokensClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "beneficiary",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "remaining",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "tokensSentToOkx",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "destination",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "remaining",
+            "type": "u64"
           }
         ]
       }
