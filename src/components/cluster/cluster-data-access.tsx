@@ -35,6 +35,11 @@ export const defaultClusters: Cluster[] = [
     endpoint: clusterApiUrl('testnet'),
     network: ClusterNetwork.Testnet,
   },
+  {
+    name: 'mainnet-beta',
+    endpoint: "https://multi-magical-frost.solana-mainnet.quiknode.pro/3185adc05cf6a6a71925659164c2328ffe800551",
+    network: ClusterNetwork.Testnet,
+  },
 ]
 
 const clusterAtom = atomWithStorage<Cluster>('solana-cluster', defaultClusters[0])
