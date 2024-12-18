@@ -6,7 +6,7 @@ use anchor_spl::{
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
-declare_id!("pyg7Rgvvw35upbJooTv9aFgdrq6pJubr4dCxusy8T1X");
+declare_id!("66Hk9sZRHxtQFGr3Y3ZLigg3TnfFRK2aw8kKKJkMwPZq");
 
 fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> Result<u64> {
     let current_time = Clock::get()?.unix_timestamp;
@@ -17,13 +17,13 @@ fn calculate_available_tokens(total_tokens: u64, created_at: i64) -> Result<u64>
         .ok_or(PepeDropError::ArithmeticError)?;
     
     let initial_unlock = total_tokens
-        .checked_mul(20)
+        .checked_mul(10)
         .ok_or(PepeDropError::ArithmeticError)?
         .checked_div(100)
         .ok_or(PepeDropError::ArithmeticError)?;
     
     let periods = (days_elapsed / 14) as u64;
-    let additional_periods = std::cmp::min(8, periods);
+    let additional_periods = std::cmp::min(9, periods);
     
     let additional_unlock = total_tokens
         .checked_mul(10)
