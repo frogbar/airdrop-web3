@@ -58,13 +58,16 @@ export function InitializeVaultModal({
 
       const mint = new PublicKey(mintAddress);
       const rawAmount = parseFloat(totalTokens);
-      const adjustedAmount = rawAmount * Math.pow(10, mintInfo.decimals);
+      // const adjustedAmount = rawAmount * Math.pow(10, mintInfo.decimals);
+
+      const multiplier = new BN(10).pow(new BN(mintInfo.decimals)); // Create multiplier as 10^decimals
+      const adjustedAmount = new BN(rawAmount).mul(multiplier); 
 
       await initializeTokenVault.mutateAsync({
         mint,
         owner: publicKey!,
         vaultName,
-        totalTokens: new BN(adjustedAmount),
+        totalTokens: adjustedAmount,
       });
       hide();
     } catch (error) {
@@ -393,11 +396,17 @@ export function ClaimList() {
 }
 
 function formatTokenAmount(amount: BN, decimals: number): string {
-  const rawAmount = amount.toNumber();
-  return (rawAmount / Math.pow(10, decimals)).toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
-  });
+  const divisor = new BN(10).pow(new BN(decimals)); // Calculate 10^decimals as a BN
+  const wholePart = amount.div(divisor); // Integer division for the whole number part
+  const fractionalPart = amount.mod(divisor); // Modulus for the fractional part
+
+  const fractionalString = fractionalPart
+    .toString()
+    .padStart(decimals, '0') // Pad fractional part with leading zeros
+    .slice(0, decimals); // Trim to the desired decimal places
+
+  // Combine the whole part and fractional part
+  return `${wholePart.toString()}.${fractionalString}`;
 }
 
 export function InitializeOkxVaultModal({
@@ -439,13 +448,15 @@ export function InitializeOkxVaultModal({
 
       const mint = new PublicKey(mintAddress);
       const rawAmount = parseFloat(totalTokens);
-      const adjustedAmount = rawAmount * Math.pow(10, mintInfo.decimals);
+
+      const multiplier = new BN(10).pow(new BN(mintInfo.decimals)); // Create multiplier as 10^decimals
+      const adjustedAmount = new BN(rawAmount).mul(multiplier); 
 
       await initializeOkxTokenVault.mutateAsync({
         mint,
         owner: publicKey!,
         vaultName,
-        totalTokens: new BN(adjustedAmount),
+        totalTokens: adjustedAmount,
       });
       hide();
     } catch (error) {
